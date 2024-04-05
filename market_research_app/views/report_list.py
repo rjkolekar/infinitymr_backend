@@ -22,10 +22,8 @@ from ..serializers.reports_serializer import ReportsSerializer
 ''' swagger '''
 # from ..swagger.reports_swagger import swagger_auto_schema_list, swagger_auto_schema_post, swagger_auto_schema, swagger_auto_schema_update, swagger_auto_schema_delete, swagger_auto_schema_bulk_delete
 
-class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiResponse):
+class ReportsListView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiResponse):
     serializer_class = ReportsSerializer
-    authentication_classes = [OAuth2Authentication, ]
-    permission_classes = [IsAuthenticated]
     singular_name = 'Reports'
     model_class = Reports.objects.select_related( 'related_reports').filter(status = STATUS_ACTIVE)
     
@@ -37,7 +35,6 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         except:
             return None
 
-    # @swagger_auto_schema
     def retrieve(self, request, *args, **kwargs):
         '''
         :To get the single record
@@ -55,92 +52,7 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
             return ApiResponse.response_ok(self, data=resp_dict)
 
         return ApiResponse.response_not_found(self, message=self.singular_name + ' not found')
-
-    # @swagger_auto_schema_post
-    @transaction.atomic()
-    def create(self, request, *args, **kwargs):
-        '''
-        :To create the new record
-        '''
-        sp1 = transaction.savepoint()
     
-        ''' capture data '''
-        req_data = request.data.copy()
-        
-        req_data["images"] = req_data.get("images_id")
-        report_id = req_data.get('report_id')
-        if not report_id:
-            # Get the latest report object
-            latest_report = Reports.objects.order_by('-id').first()
-            if not latest_report:
-                new_report_id = "IMR1001" # Initial report ID if no reports exist
-                
-            else:
-                last_report_id_str = latest_report.report_id
-                if last_report_id_str is not None and last_report_id_str.startswith("IMR"):
-                    last_report_id = int(last_report_id_str[3:])  # Extract the numeric part
-                    new_report_id = "IMR" + str(last_report_id + 1).zfill(4)  # Increment by 1  
-                else:
-                    # Handle invalid report_id format
-                    new_report_id = "IMR1001" 
-            req_data['report_id'] = new_report_id
-        serializer = self.serializer_class(data=req_data)
-
-        ''' validate serializer '''
-        if serializer.is_valid():
-            serializer.save()
-            serializer_instance = serializer.instance
-            
-            transaction.savepoint_commit(sp1)
-
-            return ApiResponse.response_created(self, data=req_data,
-                                                message=self.singular_name + ' created successfully.')
-
-        ''' serializer error '''
-        error_resp = get_serielizer_error(serializer)
-        transaction.savepoint_rollback(sp1)
-        return ApiResponse.response_bad_request(self, message=error_resp)
-
-        
-
-    # @swagger_auto_schema_update
-    @transaction.atomic()
-    def partial_update(self, request, *args, **kwargs):
-        '''
-        :To update the existing record
-        '''
-        sp1 = transaction.savepoint()
-    
-        ''' capture data '''
-        req_data = request.data
-        is_published = req_data.get('is_published')
-        get_id = self.kwargs.get('id')
-        instance = self.get_object(get_id)
-
-        if instance is None:
-            return ApiResponse.response_not_found(self, message=self.singular_name + ' not found')
-
-        if is_published == True:
-            req_data['is_published'] = True
-
-        ''' validate serializer '''
-        serializer = self.serializer_class(instance, data=req_data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            serializer_instance = serializer.instance
-            
-            ''' success response '''
-            response_data = self.transform_single(serializer_instance)
-            transaction.savepoint_commit(sp1)
-
-            return ApiResponse.response_ok(self, data=response_data, message=self.singular_name + ' updated')
-
-        error_resp = get_serielizer_error(serializer)
-        transaction.savepoint_rollback(sp1)
-        return ApiResponse.response_bad_request(self, message=error_resp)
-
-
-
     # @swagger_auto_schema_list
     def list(self, request, *args, **kwargs):
         '''
@@ -229,50 +141,6 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         response_data = transform_list(self, resp_data.get('data'))
 
         return ApiResponse.response_ok(self, data=response_data, paginator=resp_data.get('paginator'))
-
-    # @swagger_auto_schema_delete
-    def delete(self, request, *args, **kwargs):
-        '''
-        :To delete the single record.
-        '''
-    
-        get_id = self.kwargs.get('id')
-
-        ''' get instance '''
-        instance = self.get_object(get_id)
-        if instance is None:
-            return ApiResponse.response_not_found(self, message=self.singular_name + ' not found')
-
-        instance.status = 3
-        instance.save()
-
-        ''' return success '''
-        return ApiResponse.response_ok(self, message=self.singular_name + ' deleted')
-    
-
-    # @swagger_auto_schema_bulk_delete
-    def bulk_delete(self, request, *args, **kwargs):
-        '''
-        :To delete the multiple record.
-        '''
-    
-        ''' capture data '''
-        req_data = request.data
-        ids = req_data.get('ids')
-
-        if ids is None or type(ids) != list:
-            return ApiResponse.response_bad_request(self, message='Please select '+ self.singular_name)
-
-        ''' get instance '''    
-        queryset = self.model_class.filter(id__in=ids)
-        if not queryset:
-            return ApiResponse.response_not_found(self, message=self.singular_name + ' not found')
-
-        queryset.update(status = 3)
-
-        ''' return success '''
-        return ApiResponse.response_ok(self, message=self.singular_name + ' deleted.')
-    
 
     ##Generate the response
     def transform_single(self, instance):

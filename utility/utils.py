@@ -181,3 +181,62 @@ def validate_empty_strings(data_dict, req_data):
             return f"{key.replace('_', ' ').capitalize()} cannot be empty."
         elif not value:
             return f"{key.replace('_', ' ').capitalize()} cannot be empty."
+
+from django.template.loader import render_to_string
+from utility.constants import TO_EMAIL
+from django.conf import settings
+
+
+def send_common_email(subject, message, to_email, cc=[], attachment=None):
+    try:
+        print("send_common_email ")
+        print(to_email, cc)
+        from_emails = settings.FROM_EMAIL
+        msg = EmailMessage(subject, message, to=to_email, cc=cc, from_email=from_emails)
+    except Exception as e:
+        print("Exception while sending email : ", e)
+    
+    msg = EmailMessage(subject, message, to=to_email, cc=cc, from_email=from_emails)
+    # if attachment:
+    #     response = requests.get(attachment)
+    #     msg.attach("Letter", response.content, mimetype="application/pdf")
+
+    msg.content_subtype = "html"
+    try:
+        msg.send()
+    except Exception as e:
+        print("eeeeeeeeeeee",e)
+
+def send_contact_details_email(req_data):
+    try:
+        subject = "Inquiry Regarding Market Research Report"
+
+        context = {
+            "name": req_data.name,
+            "company_name" : req_data.company_name,
+            "job_title" : req_data.job_title,
+            "mobile" : req_data.mobile,
+            "email" : req_data.email     
+        }
+        if req_data.get('message'):
+            context['messgae'] = req_data.messge
+        if req_data.get('report_id'):
+            context['report_id'] = req_data.report_id
+
+        message = render_to_string("contact_details.html", context)
+        user_email = req_data.get('email')
+        cc = []
+        to_email = []
+
+        if user_email:
+            cc = [user_email]
+
+        to_email = [TO_EMAIL]
+
+        # send email
+        send_common_email(subject, message, to_email, cc)
+        # send_common_email.apply_async(args=[subject, message, to_email, cc])
+    except Exception as e:
+        print("---e", e)
+
+

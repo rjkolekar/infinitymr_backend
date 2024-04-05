@@ -32,4 +32,5 @@ from .model.base import Base
 from .model.roles import Roles
 from .model.countries import Countries
 from .model.reports import Reports
+from .model.contactdetails import Contactdetails
 

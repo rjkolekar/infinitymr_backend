@@ -55,6 +55,12 @@ urlpatterns += [
     re_path(r'^reports/(?P<id>.+)/$', ReportsView.as_view({'get': 'retrieve' , 'put': 'partial_update', 'delete': 'delete'})),
 ]
 
+from .views.report_list import ReportsListView
+''' Reports '''
+urlpatterns += [
+    re_path(r'^reports-list/$', ReportsListView.as_view({'get': 'list'})),
+    re_path(r'^reports-list/(?P<id>.+)/$', ReportsListView.as_view({'get': 'retrieve'})),
+]
 from .views.countries import CountryView
 
 """ Countries"""
@@ -68,4 +74,11 @@ urlpatterns += [
 urlpatterns += [
     re_path(r"^upload/$", FileUploadView.as_view({"post": "post"})),
     re_path(r"^upload/(?P<id>.+)/$",FileUploadView.as_view({"delete": "delete"})),
+]
+
+from .views.contactdetails import ContactdetailsView
+''' Reports '''
+urlpatterns += [
+    re_path(r'^contact-details/$', ContactdetailsView.as_view({'get': 'list', 'post': 'create', 'delete': 'bulk_delete'})),
+    re_path(r'^contact-details/(?P<id>.+)/$', ContactdetailsView.as_view({'get': 'retrieve' , 'put': 'partial_update', 'delete': 'delete'})),
 ]

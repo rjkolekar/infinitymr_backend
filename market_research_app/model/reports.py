@@ -22,9 +22,11 @@ class Reports(Base):
     no_of_pages = models.IntegerField(unique=False, null=True, blank=True, db_index=True)
     published_date = models.DateField(unique=False, null=True, blank=True, db_index=True)
     # country = models.ForeignKey(Countries, on_delete=models.SET_NULL, null=True, blank=True, related_name='country_reports', db_index=True)
-    
+    is_published = models.BooleanField(default= False, null=True, blank=True, db_index=True)
     AUTHOR_BY = ((1, 'Infinitymarketresearch'),(2, 'Gajanan'),)
     author = models.IntegerField(choices=AUTHOR_BY)
+
+    report_id = models.CharField(unique=True, null=True, blank=True, max_length=25, db_index=True)
 
     CONTINENT_BY = ((1, 'Asia'),(2, 'Africa'),(3, 'NorthAmerica'),)
     continent = models.IntegerField(choices=CONTINENT_BY)
@@ -62,6 +64,11 @@ class Reports(Base):
         resp_dict['meta_keywords'] = instance.meta_keywords
         resp_dict['no_of_pages'] = instance.no_of_pages
         resp_dict['published_date'] = instance.published_date
+        resp_dict['is_published'] = instance.is_published
+        
+        if instance.report_id:
+            resp_dict['report_id'] = instance.report_id
+            
         resp_dict['author'] = instance.author
         resp_dict['author_name'] = instance.get_author_display()
         resp_dict['continent'] = instance.continent
