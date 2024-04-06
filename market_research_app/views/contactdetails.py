@@ -12,7 +12,7 @@ from django.db import transaction
 from rest_apiresponse.apiresponse import ApiResponse
 from utility.utils import MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, get_serielizer_error, get_pagination_resp, transform_list
 from utility.constants import *
-from utility.utils import send_contact_details_email
+from utility.utils import send_contact_details_email_to_admin, send_contact_details_email_to_client
 
 ''' model imports '''
 from ..models import Contactdetails
@@ -92,7 +92,9 @@ class ContactdetailsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet,
             transaction.savepoint_commit(sp1)
 
             """ send resignation email"""
-            # send_contact_details_email(contact_details_instance)
+            send_contact_details_email_to_admin(contact_details_instance)
+            send_contact_details_email_to_client(contact_details_instance)
+            
             return ApiResponse.response_created(self, data=req_data,
                                                 message=self.singular_name + ' created successfully.')
 

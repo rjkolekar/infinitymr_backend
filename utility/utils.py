@@ -187,16 +187,16 @@ from utility.constants import TO_EMAIL
 from django.conf import settings
 
 
-def send_common_email(subject, message, to_email, cc=[], attachment=None):
+def send_common_email(subject, message, to_email, attachment=None):
     try:
         print("send_common_email ")
-        print(to_email, cc)
-        from_emails = settings.FROM_EMAIL
-        msg = EmailMessage(subject, message, to=to_email, cc=cc, from_email=from_emails)
+        print(to_email)
+        # from_emails = from_email
+        msg = EmailMessage(subject, message, to=to_email)
     except Exception as e:
         print("Exception while sending email : ", e)
     
-    msg = EmailMessage(subject, message, to=to_email, cc=cc, from_email=from_emails)
+    msg = EmailMessage(subject, message, to=to_email)
     # if attachment:
     #     response = requests.get(attachment)
     #     msg.attach("Letter", response.content, mimetype="application/pdf")
@@ -207,7 +207,7 @@ def send_common_email(subject, message, to_email, cc=[], attachment=None):
     except Exception as e:
         print("eeeeeeeeeeee",e)
 
-def send_contact_details_email(req_data):
+def send_contact_details_email_to_admin(req_data):
     try:
         subject = "Inquiry Regarding Market Research Report"
 
@@ -218,23 +218,44 @@ def send_contact_details_email(req_data):
             "mobile" : req_data.mobile,
             "email" : req_data.email     
         }
-        if req_data.get('message'):
-            context['messgae'] = req_data.messge
-        if req_data.get('report_id'):
+        if req_data.message:
+            context['message'] = req_data.message
+        if req_data.report_id:
             context['report_id'] = req_data.report_id
 
         message = render_to_string("contact_details.html", context)
-        user_email = req_data.get('email')
+        user_email = req_data.email
+
+        cc = []
+        to_email = [TO_EMAIL]
+
+        # send email
+        send_common_email(subject, message, to_email)
+        # send_common_email.apply_async(args=[subject, message, to_email, cc])
+    except Exception as e:
+        print("---e", e)
+
+
+def send_contact_details_email_to_client(req_data):
+    try:
+        subject = "Enquiry Acknowledgement"
+        COMPANY_NAME = "Infinity Market Reaserch"
+        context = {
+            "client_name": req_data.name,
+            "company_name" : COMPANY_NAME,
+            "email" : req_data.email     
+        }
+
+        message = render_to_string("acknowledgement_email.html", context)
+        user_email = req_data.email
         cc = []
         to_email = []
 
         if user_email:
-            cc = [user_email]
-
-        to_email = [TO_EMAIL]
+            to_email = [user_email]
 
         # send email
-        send_common_email(subject, message, to_email, cc)
+        send_common_email(subject, message, to_email)
         # send_common_email.apply_async(args=[subject, message, to_email, cc])
     except Exception as e:
         print("---e", e)

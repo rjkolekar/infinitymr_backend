@@ -14,7 +14,7 @@
     <p>Here are the details for contact:</p>
 
     <ul>
-        <li><strong>Name:</strong> {{ user_name }}</li>
+        <li><strong>Name:</strong> {{ name }}</li>
         <li><strong>Company Name:</strong> {{ company_name }}</li>
         <li><strong>Job Title:</strong> {{ job_title }}</li>
         <li><strong>Email:</strong> {{ email }}</li>
@@ -27,8 +27,7 @@
     <p>Thank you for your attention to this matter.</p>
 
     <p>Best regards,<br>
-    [Your Name]<br>
-    [Your Position]<br>
-    [Your Contact Information]</p>
+    {{ name }}<br>
+    {{ mobile }}</p>
 </body>
 </html>

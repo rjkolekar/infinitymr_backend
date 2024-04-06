@@ -45,15 +45,16 @@ CLIENT_SECRET = "5RjNUpkuFeo5QKKdBu6YcahgiRhTPNu3vOAUI693aoILX7tvZXEDLPd9DkaKIjP
 
 SERVER_PROTOCOLS = "http://"
 
-ADMIN_EMAIL = "stark.official123@gmail.com"
-FROM_EMAIL = "smtp@starkdigital.net"
-EMAIL_HOST = "smtpout.secureserver.net"
-EMAIL_HOST_USER = "smtp@starkdigital.net"
-EMAIL_HOST_PASSWORD = "admin?963"
-EMAIL_PORT = "465"
+# ADMIN_EMAIL = "stark.official123@gmail.com"
+# FROM_EMAIL = "joetac4@gmail.com"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST_USER = "joetac4@gmail.com"
+EMAIL_HOST_PASSWORD = "fbfwoyetydrkadqp"
+EMAIL_PORT = 587
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
+EMAIL_USE_TLS = True
+
 CC = []
 S_KEY = b"ImmOpwdpqo5ALKyjzTOKkJeHihu0i9U4qN3XP2yx_jg="
 

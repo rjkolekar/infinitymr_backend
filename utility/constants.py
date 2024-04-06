@@ -42,3 +42,4 @@ BASE_FRONT_SERVER = "http://127.0.0.1:8000/"
 
 REPORT_ID = 'IMR1000'
 TO_EMAIL = 'Gajanand1043@gmail.com'
+#TO_EMAIL = 'arjunkolekar1690@gmail.com'
