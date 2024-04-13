@@ -25,7 +25,7 @@ from ..serializers.reports_serializer import ReportsSerializer
 class ReportsListView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiResponse):
     serializer_class = ReportsSerializer
     singular_name = 'Reports'
-    model_class = Reports.objects.select_related( 'related_reports').filter(status = STATUS_ACTIVE)
+    model_class = Reports.objects.filter(status = STATUS_ACTIVE)
     
     search_fields = ['title', 'url_keywords', 'dc_description', 'report_display_title', 'report_description', 'table_of_contents', 'video_link', 'meta_description', 'meta_title', 'meta_keywords', 'no_of_pages', 'published_date', 'single_user_pdf_price', 'enterprise_pdf_price', 'five_user_pdf_price', 'site_pdf_price', 'add_report_scope']
 
@@ -131,6 +131,9 @@ class ReportsListView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, Ap
         if q_list:
             queryset = self.model_class.filter(reduce(operator.and_, q_list)).order_by(sort_by)
         
+        if related_reports := where_array.get('related_reports'):
+            if related_reports_list := [related_report for related_report in related_reports.split(',')]:
+                queryset = queryset.filter(related_reports__contains = related_reports_list)
 
         ''' Search for keyword '''
         if where_array.get('keyword'):
@@ -163,7 +166,10 @@ class ReportsListView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, Ap
         resp_dict['no_of_pages'] = instance.no_of_pages
         resp_dict['published_date'] = instance.published_date
         resp_dict['is_published'] = instance.is_published
-        
+
+        if instance.related_reports:
+            resp_dict['related_reports'] = instance.related_reports
+
         if instance.report_id:
             resp_dict['report_id'] = instance.report_id
 
@@ -176,7 +182,7 @@ class ReportsListView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, Ap
 
         resp_dict['continent'] = instance.continent
         resp_dict['continent_name'] = instance.get_continent_display()
-        print(instance.images_id,"----image")
+
         if instance.images_id:
             resp_dict['images'] = instance.images_id
             # resp_dict['image_name'] = str(instance.images.file_name)

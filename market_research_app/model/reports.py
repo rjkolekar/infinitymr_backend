@@ -14,7 +14,7 @@ class Reports(Base):
     table_of_contents = models.TextField(unique=False, null=True, blank=True, db_index=True)
     REPORT_TYPE_BY = ((1, 'Aerospace&Defense'),(2, 'Agriculture'),(3, 'Automotive&Transportation'),(4, 'Building&Construction'),(5, 'Chemicals&Materials'),(6, 'ConsumerGoods'),(7, 'Electronics&Semiconductors'),(8, 'Energy&NaturalResources'),(9, 'Food&Beverages'),(10, 'Healthcare&LifeSciences'),(11, 'HeavyEngineering'),)
     report_type = models.IntegerField(choices=REPORT_TYPE_BY)
-    related_reports = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='related_reports_reports', db_index=True)
+    related_reports = models.JSONField(null=True, blank=True)
     video_link = models.CharField(unique=False, null=True, blank=True, max_length=255, db_index=True)
     meta_description = models.TextField(unique=False, null=True, blank=True, db_index=True)
     meta_title = models.CharField(unique=False, null=True, blank=True, max_length=255, db_index=True)
@@ -66,6 +66,9 @@ class Reports(Base):
         resp_dict['published_date'] = instance.published_date
         resp_dict['is_published'] = instance.is_published
         
+        if instance.related_reports:
+            resp_dict['related_reports'] = instance.related_reports
+
         if instance.report_id:
             resp_dict['report_id'] = instance.report_id
             

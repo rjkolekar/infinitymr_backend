@@ -14,7 +14,7 @@ from utility.utils import MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet
 from utility.constants import *
 
 ''' model imports '''
-from ..models import Reports, Countries
+from ..models import Reports
 
 ''' serializers '''
 from ..serializers.reports_serializer import ReportsSerializer
@@ -27,7 +27,7 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
     authentication_classes = [OAuth2Authentication, ]
     permission_classes = [IsAuthenticated]
     singular_name = 'Reports'
-    model_class = Reports.objects.select_related( 'related_reports').filter(status = STATUS_ACTIVE)
+    model_class = Reports.objects.filter(status = STATUS_ACTIVE)
     
     search_fields = ['title', 'url_keywords', 'dc_description', 'report_display_title', 'report_description', 'table_of_contents', 'video_link', 'meta_description', 'meta_title', 'meta_keywords', 'no_of_pages', 'published_date', 'single_user_pdf_price', 'enterprise_pdf_price', 'five_user_pdf_price', 'site_pdf_price', 'add_report_scope']
 
@@ -69,6 +69,12 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         
         req_data["images"] = req_data.get("images_id")
         report_id = req_data.get('report_id')
+        related_reports = req_data.get('related_reports')
+        if related_reports:
+            for related_report in related_reports:
+                if not Reports.objects.filter(report_id=related_report, status = STATUS_ACTIVE).exists():
+                    return ApiResponse.response_bad_request(self, message="Please add valid related report id.")
+                
         if not report_id:
             # Get the latest report object
             latest_report = Reports.objects.order_by('-id').first()
@@ -116,13 +122,19 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         is_published = req_data.get('is_published')
         get_id = self.kwargs.get('id')
         instance = self.get_object(get_id)
+        related_reports = req_data.get('related_reports')
 
         if instance is None:
             return ApiResponse.response_not_found(self, message=self.singular_name + ' not found')
 
         if is_published == True:
             req_data['is_published'] = True
-
+        
+        if related_reports:
+            for related_report in related_reports:
+                if not Reports.objects.filter(report_id=related_report, status = STATUS_ACTIVE).exists():
+                    return ApiResponse.response_bad_request(self, message="Please add valid related report id.")
+                
         ''' validate serializer '''
         serializer = self.serializer_class(instance, data=req_data, partial=True)
         if serializer.is_valid():
@@ -138,8 +150,6 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         error_resp = get_serielizer_error(serializer)
         transaction.savepoint_rollback(sp1)
         return ApiResponse.response_bad_request(self, message=error_resp)
-
-
 
     # @swagger_auto_schema_list
     def list(self, request, *args, **kwargs):
@@ -185,10 +195,6 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
                 obj_list = [('continent__in', [continent])]
             else:
                 return ApiResponse.response_bad_request(self, message='Invalid continent')
-        
-        related_reports = where_array.get('related_reports')
-        if related_reports:
-            obj_list.append(('related_reports_id', related_reports))
             
         # country = where_array.get('country')
         # if country:
@@ -219,6 +225,9 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         if q_list:
             queryset = self.model_class.filter(reduce(operator.and_, q_list)).order_by(sort_by)
         
+        if related_reports := where_array.get('related_reports'):
+            if related_reports_list := [related_report for related_report in related_reports.split(',')]:
+                queryset = queryset.filter(related_reports__contains = related_reports_list)
 
         ''' Search for keyword '''
         if where_array.get('keyword'):
@@ -296,6 +305,9 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
         resp_dict['published_date'] = instance.published_date
         resp_dict['is_published'] = instance.is_published
         
+        if instance.related_reports:
+            resp_dict['related_reports'] = instance.related_reports
+
         if instance.report_id:
             resp_dict['report_id'] = instance.report_id
 
@@ -308,7 +320,7 @@ class ReportsView(MultipleFieldPKModelMixin, CreateRetrieveUpdateViewSet, ApiRes
 
         resp_dict['continent'] = instance.continent
         resp_dict['continent_name'] = instance.get_continent_display()
-        print(instance.images_id,"----image")
+        
         if instance.images_id:
             resp_dict['images'] = instance.images_id
             # resp_dict['image_name'] = str(instance.images.file_name)
